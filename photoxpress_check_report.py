@@ -1,17 +1,20 @@
 """
-протестированный скрипт, котороый открывает страницу с
-отчетом на сайте photoxpress и получает информацию о дате составления
+Протестированный скрипт, который открывает страницу с
+отчетом на сайте Photoxpress и получает информацию о дате составления
 отчета
 рефакторинг 20220413 - скрипт заносит в текстовый файл дату появления нового отчета
 """
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium import webdriver
-from datetime import datetime
+# pip install webdriver-manager
 import os
-from credentials import get_credentials
+from datetime import datetime
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from browser.chrome_driver import open_page_with_selenium
+from get_credentials import Credentials
+from send_message_to_telegram import send_telegram_message
 
 
 def notification(message):
@@ -21,62 +24,80 @@ def notification(message):
     '''
     os.system(command)
 
-def setting_chrome_options():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # фоновый режим
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")  # невидимость автоматизации
-    chrome_options.add_argument(
-        "user-agent=Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0")
-    return chrome_options
-
 
 def main():
-    pxp_user, pxp_pass = get_credentials()
-
+    pxp_user, pxp_pass = Credentials().pxp_login, Credentials().pxp_password
+    url = 'https://photoxpress.ru/commerce/commerce_base.asp?action=pc'
 
     try:
-        browser.get('http://photoxpress.ru/commerce/commerce_base.asp?action=pc')
-        browser.switch_to.frame("main_frame")
-        WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type=text]')))
-        login_input = browser.find_element(By.CSS_SELECTOR, 'input[type=text]')
-        password_input = browser.find_element(By.CSS_SELECTOR, 'input[type=password]')
-        login_input.send_keys(pxp_user)
-        password_input.send_keys(pxp_pass)
-        browser.find_element(By.CSS_SELECTOR, 'input[type=image]').click()
-        browser.switch_to.frame("left_frame")
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.XPATH, "/html/body/table[2]/tbody/tr[3]/td[2]/strong/small/a")))
-        browser.find_element(By.XPATH, "/html/body/table[2]/tbody/tr[3]/td[2]/strong/small/a").click()
-        browser.switch_to.parent_frame()
-        browser.switch_to.frame("right_frame")
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type=image]')))
-        browser.find_element(By.CSS_SELECTOR, 'input[type=image]').click()
-        period = browser.find_element(By.XPATH, "/html/body/table[1]/tbody/tr/td[2]/strong/small/font[2]").text
+        driver = open_page_with_selenium(url)
+
+        authorization(driver, pxp_pass, pxp_user)
+
+        locate_period(driver)
+
+        period = get_sales_report(driver)
 
         print(period)
         print(datetime.now().strftime("%Y-%m-%d"))
         notification(f"last report date\n\n{period}")
 
+        save_date_to_file(period)
 
-        with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'r') as log_file:
-            lines = log_file.readlines()
-            if len(lines) != 0:
-                last_date = lines[-1].strip()[13:]
-            else:
-                last_date = '*'
-        with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'a') as log_file:
-            if last_date != period:
-                log_file.write(f'{datetime.now().strftime("%Y-%m-%d")} - {period}\n')
-
-        browser.close()
-        browser.quit()
+        driver.close()
+        driver.quit()
     except Exception as ex:
         print(ex)
-        browser.close()
-        browser.quit()
+        driver.close()
+        driver.quit()
+
+
+def get_sales_report(driver):
+    driver.switch_to.parent_frame()
+    driver.switch_to.frame("right_frame")
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type=image]')))
+    driver.find_element(By.CSS_SELECTOR, 'input[type=image]').click()
+    period = driver.find_element(By.XPATH, "/html/body/table[1]/tbody/tr/td[2]/strong/small/font[2]").text
+    return period
+
+
+def locate_period(driver):
+    driver.find_element(By.CSS_SELECTOR, 'input[type=image]').click()
+    driver.switch_to.frame("left_frame")
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, "/html/body/table[2]/tbody/tr[3]/td[2]/strong/small/a")))
+    driver.find_element(By.XPATH, "/html/body/table[2]/tbody/tr[3]/td[2]/strong/small/a").click()
+
+
+def save_date_to_file(period):
+    if not os.path.exists('reports_date.txt'):
+        try:
+            open('reports_date.txt', "x").close()
+        finally:
+
+            # with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'r') as log_file:
+            with open('reports_date.txt', 'r') as log_file:
+                lines = log_file.readlines()
+                if len(lines) != 0:
+                    last_date = lines[-1].strip()[13:]
+                else:
+                    last_date = '*'
+            # with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'a') as log_file:
+            with open('reports_date.txt', 'a') as log_file:
+                if last_date != period:
+                    log_file.write(f'{datetime.now().strftime("%Y-%m-%d")} - {period}\n')
+                    send_telegram_message("new report in PXP")
+
+
+def authorization(driver, pxp_pass, pxp_user):
+    driver.switch_to.frame("main_frame")
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'input[type=text]')))
+    login_input = driver.find_element(By.CSS_SELECTOR, 'input[type=text]')
+    password_input = driver.find_element(By.CSS_SELECTOR, 'input[type=password]')
+    login_input.send_keys(pxp_user)
+    password_input.send_keys(pxp_pass)
 
 
 if __name__ == '__main__':
-    browser = webdriver.Chrome(options=setting_chrome_options())
     main()
