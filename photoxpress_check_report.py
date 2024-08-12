@@ -14,6 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 from browser.chrome_driver import open_page_with_selenium
 from get_credentials import Credentials
+from save_to_file import save_date_to_file
 from send_message_to_telegram import send_telegram_message
 
 
@@ -48,8 +49,8 @@ def main():
         driver.quit()
     except Exception as ex:
         print(ex)
-        driver.close()
-        driver.quit()
+        # driver.close()
+        # driver.quit()
 
 
 def get_sales_report(driver):
@@ -70,24 +71,22 @@ def locate_period(driver):
     driver.find_element(By.XPATH, "/html/body/table[2]/tbody/tr[3]/td[2]/strong/small/a").click()
 
 
-def save_date_to_file(period):
-    if not os.path.exists('reports_date.txt'):
-        try:
-            open('reports_date.txt', "x").close()
-        finally:
-
-            # with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'r') as log_file:
-            with open('reports_date.txt', 'r') as log_file:
-                lines = log_file.readlines()
-                if len(lines) != 0:
-                    last_date = lines[-1].strip()[13:]
-                else:
-                    last_date = '*'
-            # with open('/Users/evgeniy/Library/Mobile Documents/com~apple~CloudDocs/PXP/reports_date.txt', 'a') as log_file:
-            with open('reports_date.txt', 'a') as log_file:
-                if last_date != period:
-                    log_file.write(f'{datetime.now().strftime("%Y-%m-%d")} - {period}\n')
-                    send_telegram_message("new report in PXP")
+# def save_date_to_file(period):
+#     if not os.path.exists('reports_date.txt'):
+#         try:
+#             open('reports_date.txt', "x").close()
+#         finally:
+#
+#             with open('reports_date.txt', 'r') as log_file:
+#                 lines = log_file.readlines()
+#                 if len(lines) != 0:
+#                     last_date = lines[-1].strip()[13:]
+#                 else:
+#                     last_date = '*'
+#             with open('reports_date.txt', 'a') as log_file:
+#                 if last_date != period:
+#                     log_file.write(f'{datetime.now().strftime("%Y-%m-%d")} - {period}\n')
+#                     send_telegram_message("new report in PXP")
 
 
 def authorization(driver, pxp_pass, pxp_user):
