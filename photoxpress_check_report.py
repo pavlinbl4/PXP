@@ -6,6 +6,7 @@
 """
 # pip install webdriver-manager
 import os
+import sys
 from datetime import datetime
 
 from selenium.webdriver.common.by import By
@@ -18,7 +19,11 @@ from save_to_file import save_date_to_file
 
 from loguru import logger
 
-logger.add("output.log", format="{time} {level} {message}", level="INFO")
+# Получаем путь к директории скрипта
+script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+log_file_path = os.path.join(script_dir, "pxp_loging.log")
+
+logger.add(log_file_path, format="{time} {level} {message}", level="INFO")
 
 
 def notification(message):
