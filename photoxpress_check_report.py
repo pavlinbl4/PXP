@@ -15,7 +15,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from browser.chrome_driver import open_page_with_selenium
 from get_credentials import Credentials
 from save_to_file import save_date_to_file
-from send_message_to_telegram import send_telegram_message
+
+from loguru import logger
+
+logger.add("output.log", format="{time} {level} {message}", level="INFO")
 
 
 def notification(message):
@@ -39,9 +42,11 @@ def main():
 
         period = get_sales_report(driver)
 
-        print(period)
+        # print(period)
+        logger.info(period)
         print(datetime.now().strftime("%Y-%m-%d"))
-        notification(f"last report date\n\n{period}")
+        logger.info(datetime.now().strftime("%Y-%m-%d"))
+        # notification(f"last report date\n\n{period}")
 
         save_date_to_file(period)
 
