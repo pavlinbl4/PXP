@@ -106,8 +106,8 @@ def get_sales_report(driver):
         wait_for_element(driver, By.XPATH, '//input[@type="image"]')
         driver.find_element(By.XPATH, '//input[@type="image"]').click()
 
-        wait_for_element(driver, By.XPATH, "//font[contains(text(), '2024')]")
-        period = driver.find_element(By.XPATH, "//font[contains(text(), '2024')]").text
+        wait_for_element(driver, By.XPATH, "//font[contains(text(), '202')]")
+        period = driver.find_element(By.XPATH, "//font[contains(text(), '202')]").text
         logger.info(f"Sales report period: {period}")
         return period
     except NoSuchElementException as ex:
