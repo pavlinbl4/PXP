@@ -19,9 +19,4 @@ def open_page_with_selenium(url: str):
     return driver
 
 
-if __name__ == '__main__':
-    result = open_page_with_selenium('https://qui-quo.ru/ta-rating/FP00-FW86/item/0')
-    print(result.title)
-    print(result.current_url)
-    # Закрываем браузер
-    result.quit()
+
