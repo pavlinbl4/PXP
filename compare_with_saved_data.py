@@ -1,7 +1,10 @@
 
 """Если переданное в функцию число не равно числу в текстовом файле,
 то функция возвращает True"""
-import sys
+import os
+from loguru import logger
+
+logger.disable("compare_with_saved_data")
 
 
 def compare_with_saved_data(base_dir, int_images_number):
@@ -23,12 +26,20 @@ class CompareWithSavedData:
 
     def compare(self):
         with open(self.text_file_name, 'r+') as text_file:
-            if text_file.read().strip() != str(self.any_date):
+            file_content = text_file.read().strip()  # Сохраняем значение один раз
+            logger.info(f'{file_content = }')
+            logger.info(f'{self.any_date = }')
+            logger.info(file_content != str(self.any_date))
+            if file_content != str(self.any_date):
                 text_file.seek(0)
                 text_file.write(str(self.any_date))
                 text_file.truncate()
                 return True
             return False
+
+if __name__ == '__main__':
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logger.debug(CompareWithSavedData(script_dir,'reports_date.txt', '31 декабря 2024').compare())
 
 
 

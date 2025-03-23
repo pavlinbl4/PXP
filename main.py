@@ -1,6 +1,5 @@
 # pip install webdriver-manager
 import os
-import sys
 from datetime import datetime
 
 from loguru import logger
@@ -9,8 +8,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+import compare_with_saved_data
 from browser.chrome_driver import open_page_with_selenium
-from compare_with_saved_data import compare_with_saved_data, CompareWithSavedData
+from compare_with_saved_data import CompareWithSavedData
 from get_credentials import Credentials
 from send_message_to_telegram import send_telegram_message
 
@@ -23,6 +23,7 @@ PXP_URL = 'https://photoxpress.ru/commerce/commerce_base.asp?action=pc'
 script_dir = os.path.dirname(os.path.abspath(__file__))
 log_file_path = os.path.join(script_dir, LOG_FILE)
 logger.add(log_file_path, format="{time} {level} {message}", level="INFO")
+
 
 
 def save_date_to_file(period):
@@ -122,9 +123,7 @@ def main():
         driver = locate_period(driver)
         period = get_sales_report(driver)
 
-        save_date_to_file(period)
-
-        if CompareWithSavedData(script_dir,'reports_date.txt', period).compare():
+        if CompareWithSavedData(script_dir, f'{script_dir}/reports_date.txt', period).compare():
             send_telegram_message(f'Новый отчет {period}')
 
 
